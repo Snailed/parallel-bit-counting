@@ -1,0 +1,23 @@
+[package]
+name = "parallel-bit-counting"
+version = "0.1.0"
+authors = ["Rasmus Løvstad <rasmus.hag.lovstad@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "parallel_bit_counting"
+path = "src/lib.rs"
+test = true
+bench = true
+
+[[bench]]
+name = "bit-counting"
+harness = false
+
+[dependencies]
+rand = "0.8.4"
+
+[dev-dependencies]
+criterion = "0.3.5"
