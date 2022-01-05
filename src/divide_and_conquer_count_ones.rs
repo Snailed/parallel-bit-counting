@@ -1,3 +1,43 @@
+pub fn naive_parallel_count_ones_16(experiment: &Vec<u16>) -> Vec<u16> {
+    let m = [
+        0b0101010101010101u16,
+        0b0011001100110011u16,
+        0b0000111100001111u16,
+        0b0000000011111111u16,
+        0b1111111111111111u16,
+        0b1111111111111111u16,
+        0b1111111111111111u16,
+        0b1111111111111111u16,
+    ];
+    let mut set = experiment.clone();
+    let log_d = 4;
+    for i in 0..log_d {
+        for word in set.iter_mut() {
+            *word = (*word & m[i]) + ((*word >> (1 << i)) & m[i])
+        }
+    }
+    set
+}
+pub fn naive_parallel_count_ones_32(experiment: &Vec<u32>) -> Vec<u32> {
+    let m = [
+        0b01010101010101010101010101010101u32,
+        0b00110011001100110011001100110011u32,
+        0b00001111000011110000111100001111u32,
+        0b00000000111111110000000011111111u32,
+        0b00000000000000001111111111111111u32,
+        0b11111111111111111111111111111111u32,
+        0b11111111111111111111111111111111u32,
+        0b11111111111111111111111111111111u32,
+    ];
+    let mut set = experiment.clone();
+    let log_d = 6;
+    for i in 0..log_d {
+        for word in set.iter_mut() {
+            *word = (*word & m[i]) + ((*word >> (1 << i)) & m[i])
+        }
+    }
+    set
+}
 pub fn naive_parallel_count_ones_64(experiment: &Vec<u64>) -> Vec<u64> {
     let m = [
         0b0101010101010101010101010101010101010101010101010101010101010101u64,

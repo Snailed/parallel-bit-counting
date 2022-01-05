@@ -1,4 +1,3 @@
-use crate::calculate_mask::get_basic_masks_u128;
 use core::fmt::Binary;
 use core::fmt::Debug;
 use std::ops::Add;
@@ -8,6 +7,8 @@ use std::ops::Shl;
 use std::ops::Shr;
 
 pub enum WordLength {
+    U16,
+    U32,
     U64,
     U128,
 }
@@ -26,6 +27,16 @@ where
     Self: std::marker::Sized,
 {
     fn zero() -> Self;
+}
+impl Word for u16 {
+    fn zero() -> u16 {
+        0
+    }
+}
+impl Word for u32 {
+    fn zero() -> u32 {
+        0
+    }
 }
 impl Word for u64 {
     fn zero() -> u64 {
@@ -63,7 +74,7 @@ fn calculate_l(i: usize) -> usize {
         5..=8 => 3,
         9..=16 => 4,
         16..=32 => 5,
-        x => (x as f64).log2().ceil() as usize,
+        _ => panic!("i was out of bounds"),
     }
 }
 #[test]
@@ -95,9 +106,11 @@ pub fn count_ones<T: Word>(
     word_length: WordLength,
 ) -> Vec<T> {
     let log_d = match word_length {
+        WordLength::U16 => 4,
+        WordLength::U32 => 5,
         WordLength::U64 => 6,
         WordLength::U128 => 7,
-    }; // log_2(64) = 6
+    };
     let mut set = experiment.clone();
     for k in &mut set {
         *k = naive_pack_word(&k, 0, &masks[0][1]);
@@ -121,9 +134,8 @@ pub fn count_ones<T: Word>(
     }
 
     // Make a vector containing the cardinalities of each element
-    let mut acc = Vec::with_capacity(set.len());
+    let mut acc = Vec::with_capacity(experiment.len());
     let l = calculate_l(log_d);
-    // println!("Set: {:?}", set);
     // For each word in the set
     for word in set {
         // For each cardinality that this word contains
@@ -149,6 +161,52 @@ fn test_specific_128() {
     }
 }
 
+#[test]
+fn test_random_16() {
+    use crate::calculate_mask::GetMask;
+    use rand::Rng;
+    let masks = u16::get_mask();
+    for _ in 0..10 {
+        let mut rng = rand::thread_rng();
+        let mut val: Vec<u16> = Vec::with_capacity(1 << 14);
+        for _ in 0..(1 << 14) {
+            val.push(rng.gen::<u16>());
+        }
+        let expected: Vec<u16> = val.iter().map(|x| x.count_ones() as u16).collect();
+        let res = count_ones(&val, masks, WordLength::U16);
+        assert_eq!(res.len(), expected.len());
+        for i in 0..val.len() {
+            assert_eq!(
+                res[i], expected[i],
+                "left: {:b},\nright: {:b},\n i: {}",
+                res[i], expected[i], i
+            );
+        }
+    }
+}
+#[test]
+fn test_random_32() {
+    use crate::calculate_mask::GetMask;
+    use rand::Rng;
+    let masks = u32::get_mask();
+    for _ in 0..10 {
+        let mut rng = rand::thread_rng();
+        let mut val: Vec<u32> = Vec::with_capacity(1 << 14);
+        for _ in 0..(1 << 14) {
+            val.push(rng.gen::<u32>());
+        }
+        let expected: Vec<u32> = val.iter().map(|x| x.count_ones()).collect();
+        let res = count_ones(&val, masks, WordLength::U32);
+        assert_eq!(res.len(), expected.len());
+        for i in 0..val.len() {
+            assert_eq!(
+                res[i], expected[i],
+                "left: {:b},\nright: {:b},\n i: {}",
+                res[i], expected[i], i
+            );
+        }
+    }
+}
 #[test]
 fn test_random_64() {
     use crate::calculate_mask::GetMask;
@@ -194,12 +252,8 @@ fn test_small_sample_random_128() {
         151200256495250426677114264341598409570,
         227874780865315671664495445171902494754,
     ];
-    // println!("input 0 ({} ones): {:b}", val[0].count_ones(), val[0]);
-    // println!("input 1 ({} ones): {:b}", val[1].count_ones(), val[1]);
     let expected: Vec<u128> = val.iter().map(|x| x.count_ones() as u128).collect();
-    // println!("Expected: {:?}", expected);
     let res = count_ones(&val.clone(), masks, WordLength::U128);
-    // println!("Res: {:?}", res);
     assert_eq!(res.len(), expected.len());
     for i in 0..val.len() {
         let res_index = match i & 1 {
