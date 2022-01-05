@@ -109,10 +109,10 @@ pub fn count_ones<T: Word>(
         }
         let l = calculate_l(i);
         if l == calculate_l(i + 1) {
-            for k in 0..(set.len() / 2) {
+            for k in 0..(set.len() >> 1) {
                 set[k] = combine_words(set[k << 1], set[(k << 1) + 1], i); // each k is now (i+1)-packed
             }
-            set.truncate(set.len() / 2) // truncate is a constant-time operation
+            set.truncate(set.len() >> 1) // truncate is a constant-time operation
         } else {
             for word in &mut set {
                 *word = pack_word(&word, i, &masks[l][l + 1]); // each k is now (i+1)-packed
